@@ -1,11 +1,21 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
+
+ConfigModule.forRoot();
+
+const dbURL = process.env.DB_URL;
+
+if (!dbURL) {
+  throw new Error('DB_URL not found in environment');
+}
 
 @Module({
-  imports: [ConfigModule.forRoot()],
+  imports: [MongooseModule.forRoot(dbURL), UsersModule],
   controllers: [AppController],
   providers: [AppService],
 })
