@@ -8,7 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TapsModule } from './taps/taps.module';
 
-ConfigModule.forRoot();
+ConfigModule.forRoot({ isGlobal: true });
 
 const dbURL = process.env.DB_URL;
 

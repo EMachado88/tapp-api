@@ -10,19 +10,19 @@ export class UsersService {
   ) {}
 
   async createUser(
-    email: string,
+    username: string,
     password: string,
     firstName: string,
     lastName: string,
   ): Promise<User | NotAcceptableException> {
-    const user = await this.getUser({ email });
+    const user = await this.getUser({ username });
 
     if (user) {
       return new NotAcceptableException('User already exists');
     }
 
     return this.userModel.create({
-      email,
+      username,
       password,
       firstName,
       lastName,
