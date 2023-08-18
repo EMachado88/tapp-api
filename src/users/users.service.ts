@@ -32,8 +32,6 @@ export class UsersService {
   async getUser(query: object): Promise<User> {
     const user = this.userModel.findOne({ ...query, isDeleted: false });
 
-    user.select('-password');
-
     return user;
   }
 }
