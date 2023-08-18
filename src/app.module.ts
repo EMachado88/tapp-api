@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 ConfigModule.forRoot();
 
@@ -15,7 +16,7 @@ if (!dbURL) {
 }
 
 @Module({
-  imports: [MongooseModule.forRoot(dbURL), UsersModule],
+  imports: [MongooseModule.forRoot(dbURL), UsersModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
