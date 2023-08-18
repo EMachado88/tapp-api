@@ -30,3 +30,5 @@ export class Tap {
 }
 
 export const TapSchema = SchemaFactory.createForClass(Tap);
+
+TapSchema.index({ latitude: 1, longitude: 1 }, { unique: true });

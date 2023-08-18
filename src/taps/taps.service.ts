@@ -20,6 +20,10 @@ export class TapsService {
     console.log(this.geocodingApiUrl, this.geocodingApiKey);
   }
 
+  getOne(query: any): Promise<Tap> {
+    return this.tapModel.findOne(query);
+  }
+
   getAll(): Promise<Tap[]> {
     return this.tapModel.find({});
   }
@@ -35,6 +39,9 @@ export class TapsService {
       .subscribe((response) => {
         const { name, city } = response.data.features?.[0]?.properties;
 
+        const savedTap = this.getOne({ latitude, longitude });
+        if (savedTap) return;
+
         const tap = new this.tapModel({
           address: `${name}, ${city}`,
           latitude,
@@ -44,7 +51,7 @@ export class TapsService {
           updatedAt: new Date(),
         });
 
-        return tap.save();
+        tap.save();
       });
   }
 }
