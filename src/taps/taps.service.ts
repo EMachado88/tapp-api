@@ -10,7 +10,21 @@ export class TapsService {
     @InjectModel(Tap.name) private readonly tapModel: Model<TapDocument>,
   ) {}
 
-  async getAll(): Promise<Tap[]> {
+  getAll(): Promise<Tap[]> {
     return this.tapModel.find({});
+  }
+
+  create(payload: any): Promise<Tap> {
+    const { latitude, longitude } = payload;
+
+    const tap = new this.tapModel({
+      latitude,
+      longitude,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return tap.save();
   }
 }

@@ -8,9 +8,6 @@ export type TapDocument = Tap & Document;
 @Schema()
 export class Tap {
   @Prop({ required: true })
-  name: string;
-
-  @Prop({ required: true })
   latitude: number;
 
   @Prop({ required: true })
