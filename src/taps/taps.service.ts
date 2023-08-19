@@ -16,8 +16,6 @@ export class TapsService {
   ) {
     this.geocodingApiUrl = process.env.GEOCODING_API_URL;
     this.geocodingApiKey = process.env.GEOCODING_API_KEY;
-
-    console.log(this.geocodingApiUrl, this.geocodingApiKey);
   }
 
   getOne(query: any): Promise<Tap> {
@@ -31,6 +29,9 @@ export class TapsService {
   create(payload: any): any {
     const { latitude, longitude } = payload;
 
+    const savedTap = this.getOne({ latitude, longitude });
+    if (savedTap) return;
+
     this.httpService
       .get(
         `${this.geocodingApiUrl}?lat=${latitude}&lon=${longitude}&apiKey=${this.geocodingApiKey}`,
@@ -38,9 +39,6 @@ export class TapsService {
       .pipe()
       .subscribe((response) => {
         const { name, city } = response.data.features?.[0]?.properties;
-
-        const savedTap = this.getOne({ latitude, longitude });
-        if (savedTap) return;
 
         const tap = new this.tapModel({
           address: `${name}, ${city}`,
@@ -53,5 +51,7 @@ export class TapsService {
 
         tap.save();
       });
+
+    return { message: 'Tap created successfully' };
   }
 }
