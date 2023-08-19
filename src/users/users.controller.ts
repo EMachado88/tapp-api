@@ -5,6 +5,8 @@ import {
   NotAcceptableException,
   Delete,
   UseGuards,
+  Get,
+  Param,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.model';
@@ -25,6 +27,19 @@ export class UsersController {
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
 
+    const user = await this.usersService.getUser({ username });
+
+    if (user.isDeleted) {
+      return this.usersService.reactivateUser({
+        username,
+        firstName,
+        lastName,
+        password: hashedPassword,
+      });
+    } else if (user) {
+      return new NotAcceptableException('User already exists');
+    }
+
     const result = await this.usersService.createUser(
       username,
       hashedPassword,
@@ -35,14 +50,18 @@ export class UsersController {
     return result;
   }
 
-  @Delete('/delete')
+  @Delete('/delete/:id')
   @UseGuards(AuthGuard('jwt'))
-  async deleteUser(@Body('username') username: string): Promise<any> {
-    const result = await this.usersService.deleteUser({
-      username,
-      isDeleted: false,
-    });
+  async deleteUser(@Param('id') id: string): Promise<any> {
+    const result = await this.usersService.deleteUser({ _id: id });
 
     return result;
+  }
+
+  @Get('/users')
+  async getUsers(): Promise<User[]> {
+    const users = await this.usersService.getUsers();
+
+    return users;
   }
 }

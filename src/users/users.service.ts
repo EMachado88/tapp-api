@@ -15,7 +15,7 @@ export class UsersService {
     firstName: string,
     lastName: string,
   ): Promise<User | NotAcceptableException> {
-    const user = await this.getUser({ username });
+    const user = await this.getUser({ username, isDeleted: false });
 
     if (user) {
       return new NotAcceptableException('User already exists');
@@ -36,12 +36,24 @@ export class UsersService {
   }
 
   deleteUser(query: object): Promise<User> {
-    console.log(query);
     const user = this.userModel.findOneAndUpdate(
       { ...query },
       { isDeleted: true },
     );
 
     return user;
+  }
+
+  reactivateUser(query: any): Promise<User> {
+    const user = this.userModel.findOneAndUpdate(
+      { username: query.username },
+      { ...query, isDeleted: false },
+    );
+
+    return user;
+  }
+
+  getUsers() {
+    return this.userModel.find({});
   }
 }
