@@ -11,8 +11,11 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.getUser({ email });
+  async validateUser(username: string, password: string): Promise<any> {
+    const user = await this.usersService.getUser({
+      username,
+      isDeleted: false,
+    });
 
     const passwordValid = await bcrypt.compare(password, user.password);
 
@@ -27,7 +30,15 @@ export class AuthService {
   async login(user: any) {
     const { username } = user;
 
-    const savedUser = await this.usersService.getUser({ username });
+    const savedUser = await this.usersService.getUser({
+      username,
+      isDeleted: false,
+    });
+
+    if (!savedUser) {
+      return { message: 'User not found' };
+    }
+
     savedUser.password = undefined;
 
     return {

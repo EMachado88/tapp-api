@@ -21,7 +21,7 @@ export class UsersService {
       return new NotAcceptableException('User already exists');
     }
 
-    return this.userModel.create({
+    return await this.userModel.create({
       username,
       password,
       firstName,
@@ -29,8 +29,18 @@ export class UsersService {
     });
   }
 
-  async getUser(query: object): Promise<User> {
-    const user = this.userModel.findOne({ ...query, isDeleted: false });
+  getUser(query: object): Promise<User> {
+    const user = this.userModel.findOne(query);
+
+    return user;
+  }
+
+  deleteUser(query: object): Promise<User> {
+    console.log(query);
+    const user = this.userModel.findOneAndUpdate(
+      { ...query },
+      { isDeleted: true },
+    );
 
     return user;
   }
