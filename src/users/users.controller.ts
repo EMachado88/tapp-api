@@ -30,11 +30,13 @@ export class UsersController {
     const user = await this.usersService.getUser({ username });
 
     if (user.isDeleted) {
-      return this.usersService.reactivateUser({
+      return this.usersService.updateUser({
         username,
         firstName,
         lastName,
         password: hashedPassword,
+        isDeleted: false,
+        updatedAt: new Date(),
       });
     } else if (user) {
       return new NotAcceptableException('User already exists');

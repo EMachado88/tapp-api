@@ -44,10 +44,10 @@ export class UsersService {
     return user;
   }
 
-  reactivateUser(query: any): Promise<User> {
+  updateUser(query: any): Promise<User> {
     const user = this.userModel.findOneAndUpdate(
       { username: query.username },
-      { ...query, isDeleted: false },
+      { ...query },
     );
 
     return user;
