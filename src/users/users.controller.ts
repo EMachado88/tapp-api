@@ -66,4 +66,10 @@ export class UsersController {
 
     return users;
   }
+
+  @Get('/make-admin/:username')
+  @UseGuards(AuthGuard('jwt'))
+  async makeAdmin(@Param('username') username: string): Promise<any> {
+    return this.usersService.updateUser({ username, isAdmin: true });
+  }
 }

@@ -48,6 +48,7 @@ export class UsersService {
     const user = this.userModel.findOneAndUpdate(
       { username: query.username },
       { ...query },
+      { new: true },
     );
 
     return user;
