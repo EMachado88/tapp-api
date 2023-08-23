@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-// import { Review } from '../schemas/review';
+import { Review } from '../reviews/review.model';
 
 export type TapDocument = Tap & Document;
 
@@ -19,8 +19,8 @@ export class Tap {
   @Prop({ default: false })
   active: boolean;
 
-  // @Prop()
-  // reviews: Array<Review>;
+  @Prop([{ type: Types.ObjectId, ref: Review.name }])
+  reviews: Types.ObjectId[];
 
   @Prop({ default: new Date() })
   createdAt: Date;

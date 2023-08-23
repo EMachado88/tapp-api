@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TapsModule } from './taps/taps.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 ConfigModule.forRoot({ isGlobal: true });
 
@@ -17,7 +18,7 @@ if (!dbURL) {
 }
 
 @Module({
-  imports: [MongooseModule.forRoot(dbURL), UsersModule, AuthModule, TapsModule],
+  imports: [MongooseModule.forRoot(dbURL), UsersModule, AuthModule, TapsModule, ReviewsModule],
   controllers: [AppController],
   providers: [AppService],
 })

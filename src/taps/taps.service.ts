@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { HttpService } from '@nestjs/axios';
 
 import { Tap, TapDocument } from './tap.model';
-import { HttpService } from '@nestjs/axios';
+import { Review, ReviewDocument } from '../reviews/review.model';
 
 @Injectable()
 export class TapsService {
@@ -12,18 +13,46 @@ export class TapsService {
 
   constructor(
     @InjectModel(Tap.name) private readonly tapModel: Model<TapDocument>,
+    @InjectModel(Review.name)
+    private readonly reviewModel: Model<ReviewDocument>,
     private readonly httpService: HttpService,
   ) {
     this.geocodingApiUrl = process.env.GEOCODING_API_URL;
     this.geocodingApiKey = process.env.GEOCODING_API_KEY;
   }
 
-  getOne(query: any): Promise<Tap> {
-    return this.tapModel.findOne(query);
+  async getOne(query: any): Promise<Tap> {
+    const tap = await this.tapModel.findOne(query).select('-__v -updatedAt');
+
+    tap.reviews = await this.reviewModel
+      .find({ _id: { $in: tap.reviews } })
+      .select('-__v -tapId -updatedAt')
+      .populate({
+        path: 'user',
+        select:
+          '-__v -password -isAdmin -isVerified -isDeleted -createdAt -updatedAt',
+      });
+
+    return tap;
   }
 
-  getAll(): Promise<Tap[]> {
-    return this.tapModel.find({});
+  async getAll(): Promise<Tap[]> {
+    const taps = await this.tapModel.find().select('-__v -updatedAt');
+
+    await Promise.all(
+      taps.map(async (tap: Tap) => {
+        tap.reviews = await this.reviewModel
+          .find({ _id: { $in: tap.reviews } })
+          .select('-__v -tapId -updatedAt')
+          .populate({
+            path: 'user',
+            select:
+              '-__v -password -isAdmin -isVerified -isDeleted -createdAt -updatedAt',
+          });
+      }),
+    );
+
+    return taps;
   }
 
   create(payload: any): any {
