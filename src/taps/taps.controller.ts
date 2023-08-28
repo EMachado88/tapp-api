@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
   Param,
+  Patch,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -28,5 +29,11 @@ export class TapsController {
   @UseGuards(AuthGuard('jwt'))
   async create(@Request() req: Request) {
     return await this.tapsService.create(req.body);
+  }
+
+  @Patch('/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async update(@Param('id') id: string, @Request() req: Request) {
+    return await this.tapsService.update(id, req.body);
   }
 }

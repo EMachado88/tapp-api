@@ -83,4 +83,10 @@ export class TapsService {
 
     return { message: 'Tap created successfully' };
   }
+
+  update(id: string, payload: any): any {
+    return this.tapModel.findOneAndUpdate({ _id: id }, payload, {
+      new: true,
+    });
+  }
 }
