@@ -6,6 +6,7 @@ import {
   Request,
   Param,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -21,8 +22,8 @@ export class TapsController {
   }
 
   @Get('/:id')
-  async findOne(@Param('id') id: string) {
-    return await this.tapsService.getOne({ _id: id });
+  async findOne(@Param('id') id: number) {
+    return await this.tapsService.getOne({ id });
   }
 
   @Post()
@@ -33,7 +34,13 @@ export class TapsController {
 
   @Patch('/:id')
   @UseGuards(AuthGuard('jwt'))
-  async update(@Param('id') id: string, @Request() req: Request) {
+  async update(@Param('id') id: number, @Request() req: Request) {
     return await this.tapsService.update(id, req.body);
+  }
+
+  @Delete('/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async delete(@Param('id') id: number) {
+    return await this.tapsService.delete(id);
   }
 }

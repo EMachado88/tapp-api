@@ -1,36 +1,39 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
-export type UserDocument = User & Document;
+import { Review } from '../reviews/review.model';
 
-@Schema()
+@Entity()
 export class User {
-  @Prop({ required: true, unique: true })
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'varchar' })
   username: string;
 
-  @Prop({ required: true })
+  @Column({ type: 'varchar' })
   password: string;
 
-  @Prop({ required: true })
+  @Column({ type: 'varchar' })
   firstName: string;
 
-  @Prop({ required: true })
+  @Column({ type: 'varchar' })
   lastName: string;
 
-  @Prop({ default: false })
+  @Column({ type: 'boolean', default: false })
   isAdmin: boolean;
 
-  @Prop({ default: false })
+  @Column({ type: 'boolean', default: false })
   isVerified: boolean;
 
-  @Prop({ default: false })
+  @Column({ type: 'boolean', default: false })
   isDeleted: boolean;
 
-  @Prop({ default: new Date() })
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Prop({ default: new Date() })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 }
-
-export const UserSchema = SchemaFactory.createForClass(User);

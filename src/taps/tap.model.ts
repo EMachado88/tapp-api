@@ -1,34 +1,30 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { Review } from '../reviews/review.model';
 
-export type TapDocument = Tap & Document;
-
-@Schema()
+@Entity()
 export class Tap {
-  @Prop({ required: true })
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'varchar', length: 255 })
   address: string;
 
-  @Prop({ required: true })
+  @Column({ type: 'float' })
   latitude: number;
 
-  @Prop({ required: true })
+  @Column({ type: 'float' })
   longitude: number;
 
-  @Prop({ default: false })
+  @Column({ type: 'boolean' })
   active: boolean;
 
-  @Prop([{ type: Types.ObjectId, ref: Review.name }])
-  reviews: Types.ObjectId[];
+  @OneToMany(() => Review, (review) => review.tap)
+  reviews: Review[];
 
-  @Prop({ default: new Date() })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Prop({ default: new Date() })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 }
-
-export const TapSchema = SchemaFactory.createForClass(Tap);
-
-TapSchema.index({ latitude: 1, longitude: 1 }, { unique: true });

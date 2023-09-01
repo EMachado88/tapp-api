@@ -1,27 +1,28 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-export type ReviewDocument = Review & Document;
+import { Tap } from '../taps/tap.model';
+import { User } from '../users/user.model';
 
-@Schema()
+@Entity()
 export class Review {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
-  user: Types.ObjectId;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Tap' })
-  tap: Types.ObjectId;
+  @ManyToOne(() => User, (user) => user.reviews)
+  user: User;
 
-  @Prop({ required: true })
-  rating: number;
+  @ManyToOne(() => Tap, (tap) => tap.reviews)
+  tap: Tap;
 
-  @Prop()
+  @Column({ type: 'text', nullable: true })
   comment: string;
 
-  @Prop({ default: new Date() })
+  @Column({ type: 'int' })
+  rating: number;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Prop({ default: new Date() })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 }
-
-export const ReviewSchema = SchemaFactory.createForClass(Review);

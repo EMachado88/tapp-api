@@ -24,12 +24,11 @@ export class UsersController {
     @Body('firstName') firstName: string,
     @Body('lastName') lastName: string,
   ): Promise<User | NotAcceptableException> {
-    const saltOrRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltOrRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.usersService.getUser({ username });
 
-    if (user.isDeleted) {
+    if (user && user.isDeleted) {
       return this.usersService.updateUser({
         username,
         firstName,

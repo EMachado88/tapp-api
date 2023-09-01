@@ -1,51 +1,67 @@
-import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
-import { Review, ReviewDocument } from './review.model';
-import { Tap, TapDocument } from 'src/taps/tap.model';
+import { Review } from './review.model';
+import { Tap } from '../taps/tap.model';
+import { User } from '../users/user.model';
 
 @Injectable()
 export class ReviewsService {
   constructor(
-    @InjectModel(Review.name)
-    private readonly reviewsModel: Model<ReviewDocument>,
-    @InjectModel(Tap.name)
-    private readonly tapsModel: Model<TapDocument>,
+    @InjectRepository(Review)
+    private readonly reviewsRepository: Repository<Review>,
+    @InjectRepository(Tap)
+    private readonly tapsRepository: Repository<Tap>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
   ) {}
 
   async create(payload: any) {
-    const review = await this.reviewsModel.create(payload);
+    const review = new Review();
 
-    const tap = await this.tapsModel.findById(payload.tap);
-    tap.reviews.push(review._id);
-    tap.save();
+    const user = await this.usersRepository.findOne({
+      where: { id: payload.userId },
+    });
+
+    review.user = user;
+    review.tap = payload.tap;
+    review.comment = payload.comment;
+    review.rating = payload.rating;
+
+    this.reviewsRepository.save(review);
+
+    const tap = await this.tapsRepository.findOne({
+      where: { id: payload.tap },
+      relations: ['reviews'],
+    });
+
+    tap.reviews.push(review);
+
+    this.tapsRepository.save(tap);
 
     return review;
   }
 
-  update(payload: any) {
-    return this.reviewsModel.findByIdAndUpdate(payload._id, payload, {
-      new: true,
-    });
+  async update(payload: any) {
+    const review = await this.reviewsRepository.findOneBy({ id: payload.id });
+
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    if (payload.comment) review.comment = payload.comment;
+    if (payload.rating) review.rating = payload.rating;
+    review.updatedAt = new Date();
+
+    return this.reviewsRepository.save(review);
   }
 
   getMany(query?: any) {
-    return this.reviewsModel.find(query);
+    return this.reviewsRepository.find(query);
   }
 
-  getOne(id: string) {
-    return this.reviewsModel.findById(id);
-  }
-
-  async clear() {
-    const taps = await this.tapsModel.find();
-
-    taps.forEach(async (tap) => {
-      tap.reviews = [];
-      tap.save();
-    });
-
-    return this.reviewsModel.deleteMany({});
+  getOne(id: number) {
+    return this.reviewsRepository.findOneBy({ id });
   }
 }

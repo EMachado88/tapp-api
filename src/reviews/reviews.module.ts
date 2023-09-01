@@ -1,18 +1,14 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
-import { Review, ReviewSchema } from './review.model';
-import { Tap, TapSchema } from 'src/taps/tap.model';
+import { Review } from './review.model';
+import { Tap } from '../taps/tap.model';
+import { User } from '../users/user.model';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: Review.name, schema: ReviewSchema },
-      { name: Tap.name, schema: TapSchema },
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([Review, Tap, User])],
   controllers: [ReviewsController],
   providers: [ReviewsService],
 })

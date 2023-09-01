@@ -1,10 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteResult, Repository } from 'typeorm';
+import { firstValueFrom } from 'rxjs';
 
-import { Tap, TapDocument } from './tap.model';
-import { Review, ReviewDocument } from '../reviews/review.model';
+import { Tap } from './tap.model';
+import { Review } from '../reviews/review.model';
+
+interface TapQuery {
+  id?: number;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  active?: boolean;
+}
 
 @Injectable()
 export class TapsService {
@@ -12,81 +21,72 @@ export class TapsService {
   geocodingApiKey: string;
 
   constructor(
-    @InjectModel(Tap.name) private readonly tapModel: Model<TapDocument>,
-    @InjectModel(Review.name)
-    private readonly reviewModel: Model<ReviewDocument>,
+    @InjectRepository(Tap) private readonly tapRepository: Repository<Tap>,
+    @InjectRepository(Review)
+    private readonly reviewRepository: Repository<Review>,
     private readonly httpService: HttpService,
   ) {
     this.geocodingApiUrl = process.env.GEOCODING_API_URL;
     this.geocodingApiKey = process.env.GEOCODING_API_KEY;
   }
 
-  async getOne(query: any): Promise<Tap> {
-    const tap = await this.tapModel.findOne(query).select('-__v -updatedAt');
-
-    tap.reviews = await this.reviewModel
-      .find({ _id: { $in: tap.reviews } })
-      .select('-__v -tapId -updatedAt')
-      .populate({
-        path: 'user',
-        select:
-          '-__v -password -isAdmin -isVerified -isDeleted -createdAt -updatedAt',
-      });
-
-    return tap;
+  async getOne(query: TapQuery): Promise<Tap> {
+    return await this.tapRepository.findOne({
+      where: { ...query },
+      relations: ['reviews', 'reviews.user'],
+    });
   }
 
   async getAll(): Promise<Tap[]> {
-    const taps = await this.tapModel.find().select('-__v -updatedAt');
-
-    await Promise.all(
-      taps.map(async (tap: Tap) => {
-        tap.reviews = await this.reviewModel
-          .find({ _id: { $in: tap.reviews } })
-          .select('-__v -tapId -updatedAt')
-          .populate({
-            path: 'user',
-            select:
-              '-__v -password -isAdmin -isVerified -isDeleted -createdAt -updatedAt',
-          });
-      }),
-    );
-
-    return taps;
+    return await this.tapRepository.find({
+      relations: ['reviews', 'reviews.user'],
+    });
   }
 
-  create(payload: any): any {
+  async create(payload: any): Promise<Tap | NotAcceptableException> {
     const { latitude, longitude } = payload;
 
-    const savedTap = this.getOne({ latitude, longitude });
-    if (savedTap) return;
+    const savedTap = await this.getOne({ latitude, longitude });
+    if (savedTap) return new NotAcceptableException('Tap already exists');
 
-    this.httpService
-      .get(
+    const response = await firstValueFrom(
+      this.httpService.get(
         `${this.geocodingApiUrl}?lat=${latitude}&lon=${longitude}&apiKey=${this.geocodingApiKey}`,
-      )
-      .pipe()
-      .subscribe((response) => {
-        const { name, city } = response.data.features?.[0]?.properties;
+      ),
+    );
 
-        const tap = new this.tapModel({
-          address: `${name}, ${city}`,
-          latitude,
-          longitude,
-          active: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+    const { name, city } = response.data.features?.[0]?.properties;
 
-        tap.save();
-      });
+    const tap = new Tap();
+    tap.address = `${name}, ${city}`;
+    tap.latitude = latitude;
+    tap.longitude = longitude;
+    tap.active = false;
+    tap.reviews = [];
 
-    return { message: 'Tap created successfully' };
+    return this.tapRepository.save(tap);
   }
 
-  update(id: string, payload: any): any {
-    return this.tapModel.findOneAndUpdate({ _id: id }, payload, {
-      new: true,
-    });
+  async update(id: number, payload: any): Promise<Tap> {
+    const tap = await this.getOne({ id });
+
+    if (!tap) return;
+
+    if (payload.latitude) tap.latitude = payload.latitude;
+    if (payload.longitude) tap.longitude = payload.longitude;
+    if (payload.address) tap.address = payload.address;
+    tap.active = payload.active;
+    tap.updatedAt = new Date();
+
+    return await this.tapRepository.save(tap);
+  }
+
+  async delete(id: number): Promise<NotAcceptableException | DeleteResult> {
+    const tap = await this.getOne({ id });
+    if (!tap) return new NotAcceptableException(`Tap ${id} not found`);
+
+    await this.reviewRepository.delete({ tap });
+
+    return await this.tapRepository.delete({ id });
   }
 }
